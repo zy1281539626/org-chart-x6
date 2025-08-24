@@ -1,0 +1,15 @@
+/* 双击编辑框样式 */
+.x6-cell-tool-editor {
+  width: 120px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.card {
+  fill: #eeeeee;
+  stroke: #eeeeee;
+}
+.card.root-node {
+  fill: #b6002a;
+  stroke: #b6002a;
+}
