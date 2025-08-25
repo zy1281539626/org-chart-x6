@@ -1,4 +1,4 @@
-import { Graph } from '@antv/x6'
+import { Graph, Node } from '@antv/x6'
 import type { HierarchyResult } from '../types'
 import addIconSvg from '../assets/add.svg?raw'
 
@@ -149,8 +149,37 @@ export function useNode() {
     }
   }
 
+  // 创建幽灵节点
+  const createGhostNode = (graph: Graph, sourceNode: Node) => {
+    const bbox = sourceNode.getBBox()
+    const nodeAttrs = sourceNode.getAttrs()
+
+    return graph.addNode({
+      x: bbox.x,
+      y: bbox.y,
+      width: bbox.width,
+      height: bbox.height,
+      shape: 'rect',
+      attrs: {
+        body: {
+          fill: 'rgba(24, 144, 255, 0.1)',
+          stroke: '#1890ff',
+          strokeWidth: 2,
+          strokeDasharray: '5 5',
+        },
+        label: {
+          text: nodeAttrs['.name']?.text || '拖拽中...',
+          fill: '#1890ff',
+          fontSize: 14,
+        },
+      },
+      zIndex: 1000,
+    })
+  }
+
   return {
     registerNode,
     createNodeMeta,
+    createGhostNode,
   }
 }

@@ -28,8 +28,14 @@ export function useEdge() {
       target: `${target.id}`,
       connector: { name: 'normal' },
       router: {
-        name: 'er',
-        args: { offset: 'center' },
+        name: 'manhattan',
+        args: {
+          startDirections: ['top', 'bottom'], // 只允许上下连接
+          endDirections: ['top', 'bottom'], // 只允许上下连接
+          padding: {
+            vertical: 20, // 垂直线距离
+          },
+        },
       },
     }
   }

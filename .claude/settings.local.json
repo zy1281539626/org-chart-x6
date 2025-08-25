@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }

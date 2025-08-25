@@ -79,9 +79,45 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
     return graphInstance
   }
   // 渲染数据
-  const renderData = (treeData: unknown) => {
+  const renderData = (treeData: unknown, firstRender = false) => {
     const graphData = renderTree(treeData, fullConfig)
-    graph.value?.fromJSON(graphData)
+    // console.log(graphData)
+    if (firstRender) {
+      graph.value?.fromJSON(graphData)
+    } else {
+      const currentEdges = graph.value?.getEdges()
+      console.log('currentEdges:', currentEdges)
+
+      graph.value?.batchUpdate(() => {
+        graphData.forEach((cellData) => {
+          const cell = graph.value?.getCellById(cellData.id)
+          if (cell) {
+            // 处理节点更新
+            if (cell.isNode() && 'x' in cellData && 'y' in cellData) {
+              const node = cell as Node
+              const currentPos = node.getPosition()
+              console.log(
+                `Node ${cellData.id}: ${currentPos.x},${currentPos.y} → ${cellData.x},${cellData.y}`,
+              )
+
+              // 更新节点位置 - 使用 position 设置绝对位置
+              node.position(cellData.x!, cellData.y!)
+
+              // 更新节点数据
+              if ('data' in cellData) {
+                node.setData(cellData.data)
+              }
+            }
+
+            // 处理边更新
+            if (cell.isEdge()) {
+              const edge = cell as Edge
+              console.log('edge:', edge)
+            }
+          }
+        })
+      })
+    }
   }
 
   return {
