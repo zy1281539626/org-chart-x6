@@ -1,9 +1,12 @@
 import { ref } from 'vue'
 import { Edge, Graph, Node } from '@antv/x6'
+import { Selection } from '@antv/x6-plugin-selection'
+import { Keyboard } from '@antv/x6-plugin-keyboard'
+// import type { Attr } from '@antv/x6/lib/registry'
 import Hierarchy from '@antv/hierarchy'
 import type { HierarchyResult, OrgChartConfig } from '../types'
 import { useNode } from './useNode'
-import { mergeConfig } from '../utils'
+import { getDifference, mergeConfig } from '../utils'
 import defaultConfig from '../config'
 import { useEdge } from './useEdge'
 
@@ -73,6 +76,22 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
         edgeMovable: false,
       },
     })
+    graphInstance.use(
+      new Keyboard({
+        enabled: true,
+        global: false, // 绑定到容器而不是全局
+      }),
+    )
+    graphInstance.use(
+      new Selection({
+        enabled: true,
+        multiple: false,
+        showNodeSelectionBox: true,
+      }),
+    )
+
+    // 确保容器可以获得焦点，否则不可以delete
+    container.setAttribute('tabindex', '0')
 
     graph.value = graphInstance
 
@@ -81,38 +100,54 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
   // 渲染数据
   const renderData = (treeData: unknown, firstRender = false) => {
     const graphData = renderTree(treeData, fullConfig)
-    // console.log(graphData)
     if (firstRender) {
+      // 初始化渲染
       graph.value?.fromJSON(graphData)
     } else {
+      // 更新渲染
       const currentEdges = graph.value?.getEdges()
-      console.log('currentEdges:', currentEdges)
+      const currentEdgeIds = currentEdges?.map((edge) => edge.id) || []
+      const newEdgeIds = graphData
+        .filter((item) => item.shape === 'org-edge')
+        .map((item) => item.id)
+      const deleteEdges = getDifference(currentEdgeIds, newEdgeIds)
+      
+      // 处理节点删除
+      const currentNodes = graph.value?.getNodes()
+      const currentNodeIds = currentNodes?.map((node) => node.id) || []
+      const newNodeIds = graphData
+        .filter((item) => item.shape === 'org-node')
+        .map((item) => item.id)
+      const deleteNodes = getDifference(currentNodeIds, newNodeIds)
+      
+      // 删除边
+      deleteEdges.map((edgeId) => {
+        graph.value?.removeEdge(edgeId)
+      })
+      
+      // 删除节点
+      deleteNodes.map((nodeId) => {
+        graph.value?.removeNode(nodeId)
+      })
 
       graph.value?.batchUpdate(() => {
         graphData.forEach((cellData) => {
           const cell = graph.value?.getCellById(cellData.id)
           if (cell) {
-            // 处理节点更新
+            // 节点更新
             if (cell.isNode() && 'x' in cellData && 'y' in cellData) {
               const node = cell as Node
-              const currentPos = node.getPosition()
-              console.log(
-                `Node ${cellData.id}: ${currentPos.x},${currentPos.y} → ${cellData.x},${cellData.y}`,
-              )
-
-              // 更新节点位置 - 使用 position 设置绝对位置
               node.position(cellData.x!, cellData.y!)
-
-              // 更新节点数据
               if ('data' in cellData) {
                 node.setData(cellData.data)
               }
             }
-
-            // 处理边更新
-            if (cell.isEdge()) {
-              const edge = cell as Edge
-              console.log('edge:', edge)
+          } else {
+            // 新增节点或边
+            if (cellData.shape === 'org-node') {
+              graph.value?.addNode(cellData as Node.Metadata)
+            } else if (cellData.shape === 'org-edge') {
+              graph.value?.addEdge(cellData as Edge.Metadata)
             }
           }
         })

@@ -22,7 +22,7 @@ export function useEdge() {
 
   const createEdgeMeta = (source: HierarchyResult, target: HierarchyResult) => {
     return {
-      id: `edge-${source.id}-${target.id}`,
+      id: `edge-${source.id}#${target.id}`,
       shape: 'org-edge',
       source: `${source.id}`,
       target: `${target.id}`,

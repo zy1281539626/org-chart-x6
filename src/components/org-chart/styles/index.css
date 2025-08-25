@@ -13,3 +13,9 @@
   fill: #b6002a;
   stroke: #b6002a;
 }
+
+/* 选择框颜色 */
+.x6-widget-selection-box {
+  border-color: #b6002a;
+  border-style: solid;
+}

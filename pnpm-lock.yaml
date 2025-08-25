@@ -23,6 +23,9 @@ importers:
       '@antv/x6-plugin-keyboard':
         specifier: ^2.2.3
         version: 2.2.3(@antv/x6@2.18.1)
+      '@antv/x6-plugin-selection':
+        specifier: ^2.2.2
+        version: 2.2.2(@antv/x6@2.18.1)
       vue:
         specifier: ^3.5.18
         version: 3.5.19(typescript@5.8.3)
@@ -103,6 +106,11 @@ packages:
 
   '@antv/x6-plugin-keyboard@2.2.3':
     resolution: {integrity: sha512-pnCIC+mDyKKfkcDyLePfGxKVIqXBcldTgannITkHC1kc0IafRS1GMvzpvuDGrM5haRYd6Nwz8kjkJyHkJE4GPA==}
+    peerDependencies:
+      '@antv/x6': ^2.x
+
+  '@antv/x6-plugin-selection@2.2.2':
+    resolution: {integrity: sha512-s2gtR9Onlhr7HOHqyqg0d+4sG76JCcQEbvrZZ64XmSChlvieIPlC3YtH4dg1KMNhYIuBmBmpSum6S0eVTEiPQw==}
     peerDependencies:
       '@antv/x6': ^2.x
 
@@ -1706,6 +1714,10 @@ snapshots:
     dependencies:
       '@antv/x6': 2.18.1
       mousetrap: 1.6.5
+
+  '@antv/x6-plugin-selection@2.2.2(@antv/x6@2.18.1)':
+    dependencies:
+      '@antv/x6': 2.18.1
 
   '@antv/x6@2.18.1':
     dependencies:

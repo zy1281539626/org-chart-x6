@@ -69,7 +69,7 @@ function calculateMovePosition(
 
 export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   const { createGhostNode } = useNode()
-  const { treeData, findNodeAndParent, moveNode, addNode } = useOrgTreeData(initialData)
+  const { treeData, findNodeAndParent, moveNode, addNode, removeNode } = useOrgTreeData(initialData)
   let ghostNode: Node | null = null
   let isDragging = false
   let sourceNode: Node | null = null
@@ -95,7 +95,7 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
 
         if (success) {
           console.log(`✅ 节点移动成功${isBlankArea ? '（空白区域释放）' : ''}`)
-          console.log('📄 修改后的tree数据:', JSON.stringify(treeData.value, null, 2))
+          // console.log('📄 修改后的tree数据:', JSON.stringify(treeData.value, null, 2))
         } else {
           console.log('❌ 节点移动失败')
         }
@@ -224,9 +224,18 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
         handleMouseUpCleanup(false)
       } else {
         // 如果不是拖拽（简单点击），手动触发点击事件
-        console.log('节点被点击:', sourceNode)
-        // TODO: 添加选中样式
-        // TODO: 删除
+        // console.log('节点被点击:', sourceNode)
+        // 添加选中效果
+        // graph.batchUpdate(() => {
+        //   const nodes = graph.getNodes()
+        //   nodes.forEach((node) => {
+        //     if (node.shape === 'org-node') {
+        //       node.setAttrs({ '.card': { selected: false } })
+        //     }
+        //   })
+        // })
+        // sourceNode?.setAttrs({ '.card': { selected: true } })
+
         // 清理状态
         graph.enablePanning()
         sourceNode = null
@@ -238,6 +247,16 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   // 添加全局mouseup事件，确保在画布空白处释放也能清理
   graph.on('blank:mouseup', () => {
     handleMouseUpCleanup(true)
+
+    // 清除选中效果
+    // graph.batchUpdate(() => {
+    //   const nodes = graph.getNodes()
+    //   nodes.forEach((node) => {
+    //     if (node.shape === 'org-node') {
+    //       node.setAttrs({ '.card': { selected: false } })
+    //     }
+    //   })
+    // })
   })
 
   // 监听节点添加事件
@@ -269,6 +288,30 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
     } else {
       console.log('❌ 新节点添加失败')
     }
+  })
+
+  graph.bindKey('delete', (e: KeyboardEvent) => {
+    e.preventDefault()
+
+    const selectedCells = graph.getSelectedCells()
+    if (selectedCells.length > 0) {
+      removeNode(selectedCells[0].id)
+    }
+    // graphInstance.batchUpdate(() => {
+    //   const selectedCells = graphInstance.getSelectedCells()
+    //   if (selectedCells.length > 0) {
+    //     selectedCells.map((cell: Cell) => {
+    //       if (cell.isNode()) {
+    //         const successors = graphInstance.getSuccessors(cell)
+    //         successors.map((node) => graphInstance.removeNode(node as Node))
+    //         if (!graphInstance.isRootNode(cell)) {
+    //           graphInstance.removeNode(cell)
+    //         }
+    //       }
+    //     })
+    //   }
+    // })
+    return false
   })
 
   // 返回响应式tree数据，供外部监听

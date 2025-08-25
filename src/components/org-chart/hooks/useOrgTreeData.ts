@@ -10,7 +10,9 @@ export interface MovePosition {
 
 export function useOrgTreeData(initialData?: OrgChartData) {
   // 响应式数据
-  const treeData: Ref<OrgChartData | null> = ref(initialData ? JSON.parse(JSON.stringify(initialData)) : null)
+  const treeData: Ref<OrgChartData | null> = ref(
+    initialData ? JSON.parse(JSON.stringify(initialData)) : null,
+  )
 
   // 根据ID查找节点
   const findNodeById = (nodeId: string, data = treeData.value): OrgChartData | null => {
@@ -30,11 +32,11 @@ export function useOrgTreeData(initialData?: OrgChartData) {
   const findNodeAndParent = (
     targetId: string,
     data = treeData.value,
-    parent: OrgChartData | null = null
+    parent: OrgChartData | null = null,
   ): { node: OrgChartData; parent: OrgChartData | null; index: number } | null => {
     if (!data) return null
     if (data.id === targetId) {
-      const index = parent?.children?.findIndex(child => child.id === targetId) ?? 0
+      const index = parent?.children?.findIndex((child) => child.id === targetId) ?? 0
       return { node: data, parent, index }
     }
 
@@ -49,6 +51,7 @@ export function useOrgTreeData(initialData?: OrgChartData) {
 
   // 移除节点（返回被移除的节点）
   const removeNode = (nodeId: string): OrgChartData | null => {
+    console.log(treeData.value)
     if (!treeData.value || treeData.value.id === nodeId) {
       console.error('不能删除根节点')
       return null
@@ -124,6 +127,6 @@ export function useOrgTreeData(initialData?: OrgChartData) {
     removeNode,
     addNode,
     moveNode,
-    updateTreeData
+    updateTreeData,
   }
 }

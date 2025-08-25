@@ -21,6 +21,7 @@
     "@antv/x6-plugin-export": "^2.1.6",
     "@antv/x6-plugin-history": "^2.2.4",
     "@antv/x6-plugin-keyboard": "^2.2.3",
+    "@antv/x6-plugin-selection": "^2.2.2",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"
   },

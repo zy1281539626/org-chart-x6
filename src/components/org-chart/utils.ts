@@ -72,3 +72,8 @@ export function getQuadrant(
 
   return 0 // 在中心点
 }
+
+// 获取数组A中有但数组B中没有的元素
+export function getDifference<T>(arrayA: T[], arrayB: T[]): T[] {
+  return arrayA.filter((item) => !arrayB.includes(item))
+}
