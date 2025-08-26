@@ -145,7 +145,8 @@ function calculateMovePosition(
 
 export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   const { createGhostNode, createPreviewNode, createPreviewEdge } = useNode()
-  const { treeData, findNodeAndParent, moveNode, addNode, removeNode, updateTreeData } = useOrgTreeData(initialData)
+  const { treeData, findNodeAndParent, moveNode, addNode, removeNode, updateTreeData } =
+    useOrgTreeData(initialData)
   let ghostNode: Node | null = null
   let isDragging = false
   let sourceNode: Node | null = null
@@ -159,7 +160,7 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   const INTERSECTION_CHECK_INTERVAL = 16 // ~60fps
 
   // 公共清理逻辑
-  const handleMouseUpCleanup = (isBlankArea = false) => {
+  const handleMouseUpCleanup = () => {
     graph.enablePanning()
 
     if (isDragging && sourceNode) {
@@ -168,22 +169,15 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
       const pendingMove = allData?.pendingMove as MovePosition | undefined
 
       if (pendingMove) {
-        // 执行移动操作
-        const success = moveNode(sourceNode.id, pendingMove)
-
-        if (success) {
-          console.log(`✅ 节点移动成功${isBlankArea ? '（空白区域释放）' : ''}`)
-          // console.log('📄 修改后的tree数据:', JSON.stringify(treeData.value, null, 2))
-        } else {
-          console.log('❌ 节点移动失败')
-        }
-
-        // 清理pending数据
+        // 清理pending数据（先清理，避免产生额外的历史记录）
         const currentData = sourceNode.getData()
         if (currentData) {
           delete currentData.pendingMove
-          sourceNode.setData(currentData)
+          sourceNode.setData(currentData, { silent: true }) // silent: true 避免产生历史记录
         }
+
+        // 执行移动操作，让后续的渲染产生历史记录
+        moveNode(sourceNode.id, pendingMove)
       }
 
       // 清理幽灵节点
@@ -227,7 +221,6 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
       // 只有移动距离超过阈值才开始拖拽
       if (!isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
         isDragging = true
-        // console.log('开始拖拽')
       }
 
       if (isDragging) {
@@ -301,7 +294,6 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
                   movePosition.parentId,
                   movePosition.insertIndex,
                 )
-                // console.log('getChildNodeIdAtIndex:', targetNodeId, childrenIds)
 
                 // 将要加入的位置已经有节点了
                 if (targetNodeId) {
@@ -325,14 +317,14 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
                 previewEdge = createPreviewEdge(graph, previewEdge, previewNode, parentNode)
 
                 // 暂存移动信息，在mouseup时执行
-                sourceNode.setData({ pendingMove: movePosition })
+                sourceNode.setData({ pendingMove: movePosition }, { silent: true })
               }
             } else {
               // 没有相交节点时，清除之前的movePosition和预览节点
               const currentData = sourceNode.getData()
               if (currentData?.pendingMove) {
                 delete currentData.pendingMove
-                sourceNode.setData(currentData)
+                sourceNode.setData(currentData, { silent: true })
               }
 
               // 清理预览节点
@@ -356,10 +348,9 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
       if (isDragging) {
         // 如果是拖拽操作，执行拖拽清理逻辑
         e.stopPropagation()
-        handleMouseUpCleanup(false)
+        handleMouseUpCleanup()
       } else {
         // 如果不是拖拽（简单点击），手动触发点击事件
-        // console.log('节点被点击:', sourceNode)
 
         // 清理状态
         graph.enablePanning()
@@ -371,7 +362,7 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
 
   // 添加全局mouseup事件，确保在画布空白处释放也能清理
   graph.on('blank:mouseup', () => {
-    handleMouseUpCleanup(true)
+    handleMouseUpCleanup()
   })
 
   // 监听节点添加事件
@@ -399,9 +390,6 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
 
     if (success) {
       console.log('✅ 新节点添加成功:', newNodeData)
-      // console.log('📄 更新后的tree数据:', JSON.stringify(treeData.value, null, 2))
-    } else {
-      console.log('❌ 新节点添加失败')
     }
   })
 

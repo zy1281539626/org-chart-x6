@@ -55,5 +55,6 @@ export interface HierarchyResult {
   name?: string
   x: number
   y: number
+  data: OrgChartData
   children: HierarchyResult[]
 }

@@ -128,7 +128,7 @@ export function useNode() {
       '.card'?: { class: string }
     } = {
       '.name': {
-        text: data.name || `节点 ${data.id}`,
+        text: data.data.name || `A节点 ${data.id}`,
         fill: isRoot ? '#ffffff' : '#000000',
       },
     }

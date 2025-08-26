@@ -116,9 +116,7 @@ export function useOrgTreeData(initialData?: OrgChartData) {
 
   // 更新整个tree数据
   const updateTreeData = (newData: OrgChartData) => {
-    console.log('📝 [useOrgTreeData] 更新树数据:', JSON.stringify(newData, null, 2))
     treeData.value = JSON.parse(JSON.stringify(newData))
-    console.log('✅ [useOrgTreeData] 树数据更新完成')
   }
 
   return {

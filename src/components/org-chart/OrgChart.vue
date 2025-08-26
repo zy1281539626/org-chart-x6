@@ -49,10 +49,7 @@ const initChart = async () => {
 
     // 设置数据同步回调 - 当undo/redo时更新eventTreeData
     setTreeDataSyncCallback((newData: OrgChartData) => {
-      console.log('🔄 [OrgChart] 收到数据同步回调:')
-      console.log(JSON.stringify(newData, null, 2))
       if (updateEventTreeData) {
-        console.log('🔄 [OrgChart] 正在更新事件树数据...')
         updateEventTreeData(newData)
       }
     })
@@ -60,14 +57,12 @@ const initChart = async () => {
     // 监听数据变化，重新渲染
     watch(
       eventTreeData,
-      (newData, oldData) => {
-        console.log('👀 [OrgChart] 事件树数据变化:')
-        console.log('  旧数据:', JSON.stringify(oldData, null, 2))
-        console.log('  新数据:', JSON.stringify(newData, null, 2))
+      (newData) => {
         if (newData && graphInstance) {
-          console.log('🔄 [OrgChart] 开始重新渲染图形...')
-          renderData(newData)
-          console.log('✅ [OrgChart] 图形重新渲染完成')
+          // 使用 batchUpdate 确保所有图形操作被合并为一个历史记录
+          graphInstance.batchUpdate(() => {
+            renderData(newData, false) // 正常渲染，允许产生历史记录
+          })
         }
       },
       { deep: true },
@@ -88,46 +83,14 @@ const exportChart = () => {
 }
 // 撤销
 const onUndo = () => {
-  console.log('🔙 [OrgChart] 用户点击撤销按钮')
-  if (graphInstance) {
-    console.log('📊 [OrgChart] 撤销前历史状态:', {
-      canUndo: graphInstance.canUndo(),
-      canRedo: graphInstance.canRedo(),
-      undoStackSize: graphInstance.getUndoStackSize(),
-      redoStackSize: graphInstance.getRedoStackSize(),
-      historyStackSize: graphInstance.getHistoryStackSize(),
-      currentNodesCount: graphInstance.getNodes().length,
-      currentEdgesCount: graphInstance.getEdges().length
-    })
-    
-    if (graphInstance.canUndo()) {
-      console.log('✅ [OrgChart] 可以撤销，执行撤销操作')
-      graphInstance.undo()
-    } else {
-      console.log('❌ [OrgChart] 无法撤销')
-    }
+  if (graphInstance?.canUndo()) {
+    graphInstance.undo()
   }
 }
 // 重做
 const onRedo = () => {
-  console.log('🔜 [OrgChart] 用户点击重做按钮')
-  if (graphInstance) {
-    console.log('📊 [OrgChart] 重做前历史状态:', {
-      canUndo: graphInstance.canUndo(),
-      canRedo: graphInstance.canRedo(),
-      undoStackSize: graphInstance.getUndoStackSize(),
-      redoStackSize: graphInstance.getRedoStackSize(),
-      historyStackSize: graphInstance.getHistoryStackSize(),
-      currentNodesCount: graphInstance.getNodes().length,
-      currentEdgesCount: graphInstance.getEdges().length
-    })
-    
-    if (graphInstance.canRedo()) {
-      console.log('✅ [OrgChart] 可以重做，执行重做操作')
-      graphInstance.redo()
-    } else {
-      console.log('❌ [OrgChart] 无法重做')
-    }
+  if (graphInstance?.canRedo()) {
+    graphInstance.redo()
   }
 }
 

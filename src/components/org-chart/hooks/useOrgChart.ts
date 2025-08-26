@@ -50,13 +50,10 @@ function renderTree(treeData: unknown, config: Partial<OrgChartConfig>) {
 
 // [撤销/重做]从X6图形状态重建树形数据结构
 function rebuildTreeDataFromGraph(graph: Graph): OrgChartData | null {
-  console.log('🔍 [rebuildTreeDataFromGraph] 开始重建树形数据')
   const nodes = graph.getNodes()
   const edges = graph.getEdges()
-  console.log('🔍 [rebuildTreeDataFromGraph] 节点数量:', nodes.length, '边数量:', edges.length)
 
   if (nodes.length === 0) {
-    console.log('❌ [rebuildTreeDataFromGraph] 没有节点，返回null')
     return null
   }
 
@@ -91,11 +88,8 @@ function rebuildTreeDataFromGraph(graph: Graph): OrgChartData | null {
     }
   }
 
-  console.log('🔍 [rebuildTreeDataFromGraph] 根节点ID:', rootNodeId)
-  console.log('🔍 [rebuildTreeDataFromGraph] 父子关系映射:', Array.from(childrenMap.entries()))
-
   if (!rootNodeId) {
-    console.error('❌ [rebuildTreeDataFromGraph] 无法找到根节点')
+    console.error('❌ 无法找到根节点')
     return null
   }
 
@@ -130,9 +124,7 @@ function rebuildTreeDataFromGraph(graph: Graph): OrgChartData | null {
     }
   }
 
-  const result = buildOrderedTree(rootNodeId)
-  console.log('✅ [rebuildTreeDataFromGraph] 按位置排序重建完成:', JSON.stringify(result, null, 2))
-  return result
+  return buildOrderedTree(rootNodeId)
 }
 
 export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
@@ -156,22 +148,12 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
   const setupHistorySyncHandlers = (graphInstance: Graph) => {
     // 监听 undo 事件
     graphInstance.on('history:undo', () => {
-      console.log('📋 [History] Undo事件触发')
-      console.log('📋 [History] 当前历史状态:', {
-        canUndo: graphInstance.canUndo(),
-        canRedo: graphInstance.canRedo(),
-        undoStackSize: graphInstance.getUndoStackSize(),
-        redoStackSize: graphInstance.getRedoStackSize(),
-        historyStackSize: graphInstance.getHistoryStackSize(),
-      })
       if (onTreeDataSync) {
-        isProcessingHistory = true // 标记正在处理历史操作
+        isProcessingHistory = true
         const rebuiltData = rebuildTreeDataFromGraph(graphInstance)
         if (rebuiltData) {
-          console.log('🔄 [History] Undo: 正在同步树形数据...')
           onTreeDataSync(rebuiltData)
         }
-        // 延迟重置标记，确保渲染完成
         setTimeout(() => {
           isProcessingHistory = false
         }, 100)
@@ -180,40 +162,53 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
 
     // 监听 redo 事件
     graphInstance.on('history:redo', () => {
-      console.log('📋 [History] Redo事件触发')
-      console.log('📋 [History] 当前历史状态:', {
-        canUndo: graphInstance.canUndo(),
-        canRedo: graphInstance.canRedo(),
-        undoStackSize: graphInstance.getUndoStackSize(),
-        redoStackSize: graphInstance.getRedoStackSize(),
-        historyStackSize: graphInstance.getHistoryStackSize(),
-      })
       if (onTreeDataSync) {
-        isProcessingHistory = true // 标记正在处理历史操作
+        isProcessingHistory = true
         const rebuiltData = rebuildTreeDataFromGraph(graphInstance)
         if (rebuiltData) {
-          console.log('🔄 [History] Redo: 正在同步树形数据...')
           onTreeDataSync(rebuiltData)
         }
-        // 延迟重置标记，确保渲染完成
         setTimeout(() => {
           isProcessingHistory = false
         }, 100)
       }
     })
 
-    // 监听历史记录变化
-    graphInstance.on('history:add', ({ cmds }) => {
-      console.log('📝 [History] 新增历史记录:', {
-        commandCount: cmds.length,
-        undoStackSize: graphInstance.getUndoStackSize(),
-        redoStackSize: graphInstance.getRedoStackSize(),
-      })
+    // 监听节点编辑器开始事件
+    graphInstance.on('node:editor:open', ({ cell }) => {
+      if (cell.isNode()) {
+        console.log('📝 Node-editor: 开始编辑节点', cell.id)
+      }
     })
 
-    // 监听历史记录清空
-    graphInstance.on('history:clean', () => {
-      console.log('🧹 [History] 历史记录被清空')
+    // 监听节点编辑器关闭事件
+    graphInstance.on('node:editor:close', ({ cell }) => {
+      if (cell.isNode()) {
+        console.log('📝 Node-editor: 编辑完成节点', cell.id)
+
+        // if (onTreeDataSync && !isProcessingHistory) {
+        //   const rebuiltData = rebuildTreeDataFromGraph(graphInstance)
+        //   if (rebuiltData) {
+        //     // 设置标志，避免 watch 触发渲染
+        //     isProcessingHistory = true
+        //     onTreeDataSync(rebuiltData)
+        //     setTimeout(() => {
+        //       isProcessingHistory = false
+        //     }, 50)
+        //   }
+        // }
+      }
+    })
+
+    // 备用方案：监听属性变化，但排除正在编辑的节点
+    graphInstance.on('node:change:attrs', ({ node, current, previous }) => {
+      // console.log('🔍 属性变化调试:', {
+      //   nodeId: node.id,
+      //   editingNodeId,
+      //   isEditing: editingNodeId === node.id,
+      //   currentText: current['.name']?.text,
+      //   previousText: previous?.['.name']?.text,
+      // })
     })
   }
 
@@ -273,13 +268,6 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
   }
   // 渲染数据
   const renderData = (treeData: unknown, firstRender = false) => {
-    console.log(
-      '🎨 [renderData] 开始渲染，firstRender:',
-      firstRender,
-      'isProcessingHistory:',
-      isProcessingHistory,
-    )
-
     const graphData = renderTree(treeData, fullConfig)
     if (firstRender) {
       // 初始化渲染
@@ -301,53 +289,50 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
         .map((item) => item.id)
       const deleteNodes = getDifference(currentNodeIds, newNodeIds)
 
-      // 如果正在处理历史操作，临时禁用历史记录
+      // 历史记录管理：只在处理历史操作（undo/redo）时禁用历史记录
+      // 正常的移动操作应该产生历史记录
       const wasHistoryEnabled = graph.value?.isHistoryEnabled()
-      if (isProcessingHistory && wasHistoryEnabled) {
-        console.log('🚫 [renderData] 临时禁用历史记录，避免干扰undo/redo')
+      const shouldDisableHistory = isProcessingHistory && wasHistoryEnabled
+
+      if (shouldDisableHistory) {
         graph.value?.disableHistory()
       }
 
-      graph.value?.batchUpdate(() => {
-        // 删除边
-        deleteEdges.map((edgeId) => {
-          graph.value?.removeEdge(edgeId)
-        })
-        // 删除节点
-        deleteNodes.map((nodeId) => {
-          graph.value?.removeNode(nodeId)
-        })
+      // 删除边
+      deleteEdges.map((edgeId) => {
+        graph.value?.removeEdge(edgeId)
+      })
+      // 删除节点
+      deleteNodes.map((nodeId) => {
+        graph.value?.removeNode(nodeId)
+      })
 
-        graphData.forEach((cellData) => {
-          const cell = graph.value?.getCellById(cellData.id)
-          if (cell) {
-            // 节点更新
-            if (cell.isNode() && 'x' in cellData && 'y' in cellData) {
-              const node = cell as Node
-              node.position(cellData.x!, cellData.y!)
-              if ('data' in cellData) {
-                node.setData(cellData.data)
-              }
-            }
-          } else {
-            // 新增节点或边
-            if (cellData.shape === 'org-node') {
-              graph.value?.addNode(cellData as Node.Metadata)
-            } else if (cellData.shape === 'org-edge') {
-              graph.value?.addEdge(cellData as Edge.Metadata)
+      graphData.forEach((cellData) => {
+        const cell = graph.value?.getCellById(cellData.id)
+        if (cell) {
+          // 节点更新
+          if (cell.isNode() && 'x' in cellData && 'y' in cellData) {
+            const node = cell as Node
+            node.position(cellData.x!, cellData.y!)
+            if ('data' in cellData) {
+              node.setData(cellData.data)
             }
           }
-        })
+        } else {
+          // 新增节点或边
+          if (cellData.shape === 'org-node') {
+            graph.value?.addNode(cellData as Node.Metadata)
+          } else if (cellData.shape === 'org-edge') {
+            graph.value?.addEdge(cellData as Edge.Metadata)
+          }
+        }
       })
 
       // 恢复历史记录状态
-      if (isProcessingHistory && wasHistoryEnabled) {
-        console.log('✅ [renderData] 重新启用历史记录')
+      if (shouldDisableHistory) {
         graph.value?.enableHistory()
       }
     }
-
-    console.log('✅ [renderData] 渲染完成')
   }
 
   return {
