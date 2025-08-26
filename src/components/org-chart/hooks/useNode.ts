@@ -1,4 +1,4 @@
-import { Graph, Node } from '@antv/x6'
+import { Edge, Graph, Node } from '@antv/x6'
 import type { HierarchyResult } from '../types'
 import addIconSvg from '../assets/add.svg?raw'
 
@@ -177,9 +177,79 @@ export function useNode() {
     })
   }
 
+  // 创建或更新预览节点
+  const createPreviewNode = (
+    graph: Graph,
+    existingPreviewNode: Node | null,
+    x: number,
+    y: number,
+  ): Node => {
+    if (existingPreviewNode) {
+      // 如果预览节点已存在，直接移动位置
+      existingPreviewNode.setPosition(x, y)
+      return existingPreviewNode
+    } else {
+      // 创建新的预览节点
+      return graph.addNode({
+        x,
+        y,
+        width: 100,
+        height: 28,
+        shape: 'rect',
+        attrs: {
+          body: {
+            fill: '#ff9500',
+            stroke: '#ff6600',
+            strokeWidth: 2,
+            opacity: 0.8,
+          },
+        },
+        zIndex: 999,
+      })
+    }
+  }
+
+  // 创建或更新预览边
+  const createPreviewEdge = (
+    graph: Graph,
+    existingPreviewEdge: Edge | null,
+    previewNode: Node,
+    parentNode: Node,
+  ) => {
+    // 如果已有预览边，先移除
+    if (existingPreviewEdge) {
+      existingPreviewEdge.remove()
+    }
+
+    // 创建新的预览边
+    return graph.addEdge({
+      source: { cell: parentNode.id },
+      target: { cell: previewNode.id },
+      shape: 'org-edge',
+      router: {
+        name: 'manhattan',
+        args: {
+          excludeShapes: ['org-node', 'rect'],
+          excludeNodes: [previewNode],
+          startDirections: ['bottom'],
+          endDirections: ['top'],
+        },
+      },
+      attrs: {
+        line: {
+          stroke: '#ff9500',
+          strokeWidth: 2,
+        },
+      },
+      zIndex: 998,
+    })
+  }
+
   return {
     registerNode,
     createNodeMeta,
     createGhostNode,
+    createPreviewNode,
+    createPreviewEdge,
   }
 }

@@ -51,7 +51,6 @@ export function useOrgTreeData(initialData?: OrgChartData) {
 
   // 移除节点（返回被移除的节点）
   const removeNode = (nodeId: string): OrgChartData | null => {
-    console.log(treeData.value)
     if (!treeData.value || treeData.value.id === nodeId) {
       console.error('不能删除根节点')
       return null
@@ -117,7 +116,9 @@ export function useOrgTreeData(initialData?: OrgChartData) {
 
   // 更新整个tree数据
   const updateTreeData = (newData: OrgChartData) => {
+    console.log('📝 [useOrgTreeData] 更新树数据:', JSON.stringify(newData, null, 2))
     treeData.value = JSON.parse(JSON.stringify(newData))
+    console.log('✅ [useOrgTreeData] 树数据更新完成')
   }
 
   return {

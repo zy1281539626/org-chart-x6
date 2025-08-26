@@ -1,12 +1,51 @@
-import type { Graph, Node } from '@antv/x6'
+import type { Edge, Graph, Node } from '@antv/x6'
 import { useNode } from './useNode'
 import type { OrgChartData } from '../types'
 import { useOrgTreeData, type MovePosition } from './useOrgTreeData'
 import { getIntersectionInfo, getQuadrant } from '../utils'
 
+// 从treeData中获取指定parentId下第insertIndex个节点的id以及所有子节点id数组
+function getChildNodeIdAtIndex(
+  data: OrgChartData,
+  parentId: string,
+  insertIndex: number,
+): { targetNodeId: string | null; childrenIds: string[] } {
+  if (parentId === 'root') {
+    // 根级只有一个节点
+    return {
+      targetNodeId: insertIndex === 0 ? data.id : null,
+      childrenIds: [data.id],
+    }
+  }
+
+  // 递归查找父节点
+  const findNode = (node: OrgChartData): OrgChartData | null => {
+    if (node.id === parentId) return node
+    if (node.children) {
+      for (const child of node.children) {
+        const result = findNode(child)
+        if (result) return result
+      }
+    }
+    return null
+  }
+
+  const parentNode = findNode(data)
+  if (!parentNode?.children) {
+    return { targetNodeId: null, childrenIds: [] }
+  }
+
+  const childrenIds = parentNode.children.map((child) => child.id)
+  return {
+    targetNodeId: parentNode.children[insertIndex]?.id || null,
+    childrenIds,
+  }
+}
+
 // 根据相交节点和象限计算移动位置
 function calculateMovePosition(
   intersectingNodeId: string,
+  sourceNodeId: string,
   quadrant: number,
   findNodeAndParentFn: (
     targetId: string,
@@ -18,15 +57,31 @@ function calculateMovePosition(
 
   const { node: targetNode, parent: parentNode, index: nodeIndex } = result
 
+  // 找到源节点的当前位置
+  const sourceResult = findNodeAndParentFn(sourceNodeId)
+  if (!sourceResult) return null
+
+  const { parent: sourceParent, index: sourceIndex } = sourceResult
+
   switch (quadrant) {
     case 1: // 右上 - 加在当前节点右边（同级）
       if (!parentNode) {
+        // 检查源节点是否已经在根节点右边
+        if (!sourceParent && sourceIndex === 1) {
+          return null // 已经在目标位置，不需要移动
+        }
         return {
           targetLevel: 'parent',
           parentId: 'root',
           insertIndex: 1, // 根节点右边
         }
       }
+
+      // 检查源节点是否已经在目标位置（目标节点右边）
+      if (sourceParent?.id === parentNode.id && sourceIndex === nodeIndex + 1) {
+        return null // 已经在目标位置，不需要移动
+      }
+
       return {
         targetLevel: 'parent',
         parentId: parentNode.id,
@@ -35,12 +90,22 @@ function calculateMovePosition(
 
     case 2: // 左上 - 加在当前节点左边（同级）
       if (!parentNode) {
+        // 检查源节点是否已经在根节点左边
+        if (!sourceParent && sourceIndex === 0) {
+          return null // 已经在目标位置，不需要移动
+        }
         return {
           targetLevel: 'parent',
           parentId: 'root',
           insertIndex: 0, // 根节点左边
         }
       }
+
+      // 检查源节点是否已经在目标位置（目标节点左边）
+      if (sourceParent?.id === parentNode.id && sourceIndex === nodeIndex) {
+        return null // 已经在目标位置，不需要移动
+      }
+
       return {
         targetLevel: 'parent',
         parentId: parentNode.id,
@@ -48,6 +113,11 @@ function calculateMovePosition(
       }
 
     case 3: // 左下 - 加在子级最左边
+      // 检查源节点是否已经是目标节点的第一个子节点
+      if (sourceParent?.id === targetNode.id && sourceIndex === 0) {
+        return null // 已经在目标位置，不需要移动
+      }
+
       return {
         targetLevel: 'child',
         parentId: targetNode.id,
@@ -56,6 +126,12 @@ function calculateMovePosition(
 
     case 4: // 右下 - 加在子级最右边
       const childCount = targetNode.children?.length || 0
+
+      // 检查源节点是否已经是目标节点的最后一个子节点
+      if (sourceParent?.id === targetNode.id && sourceIndex === childCount - 1) {
+        return null // 已经在目标位置，不需要移动
+      }
+
       return {
         targetLevel: 'child',
         parentId: targetNode.id,
@@ -68,11 +144,13 @@ function calculateMovePosition(
 }
 
 export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
-  const { createGhostNode } = useNode()
-  const { treeData, findNodeAndParent, moveNode, addNode, removeNode } = useOrgTreeData(initialData)
+  const { createGhostNode, createPreviewNode, createPreviewEdge } = useNode()
+  const { treeData, findNodeAndParent, moveNode, addNode, removeNode, updateTreeData } = useOrgTreeData(initialData)
   let ghostNode: Node | null = null
   let isDragging = false
   let sourceNode: Node | null = null
+  let previewNode: Node | null = null
+  let previewEdge: Edge | null = null
   let mouseDownPosition: { x: number; y: number } | null = null
   const DRAG_THRESHOLD = 5 // 拖拽阈值，移动超过5px才认为是拖拽
 
@@ -113,6 +191,16 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
         ghostNode.remove()
         ghostNode = null
       }
+
+      // 清理预览节点
+      if (previewNode) {
+        previewNode.remove()
+        previewNode = null
+      }
+      if (previewEdge) {
+        previewEdge.remove()
+        previewEdge = null
+      }
     }
 
     isDragging = false
@@ -139,7 +227,7 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
       // 只有移动距离超过阈值才开始拖拽
       if (!isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
         isDragging = true
-        console.log('开始拖拽')
+        // console.log('开始拖拽')
       }
 
       if (isDragging) {
@@ -201,13 +289,60 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
               // 计算移动位置
               const movePosition = calculateMovePosition(
                 maxAreaNode.id,
+                sourceNode.id,
                 maxAreaNode.quadrant,
                 findNodeAndParent,
               )
 
               if (movePosition) {
+                const parentNode = graph.getCellById(movePosition.parentId) as Node
+                const { targetNodeId, childrenIds } = getChildNodeIdAtIndex(
+                  treeData.value!,
+                  movePosition.parentId,
+                  movePosition.insertIndex,
+                )
+                // console.log('getChildNodeIdAtIndex:', targetNodeId, childrenIds)
+
+                // 将要加入的位置已经有节点了
+                if (targetNodeId) {
+                  const targetNode = graph.getCellById(targetNodeId!) as Node
+                  const { x, y } = targetNode?.position()
+                  previewNode = createPreviewNode(graph, previewNode, x - 60, y - 10)
+                } else {
+                  // 将要加入的位置没有节点
+                  if (childrenIds.length === 0) {
+                    // 没有任何子节点，加下面
+                    const { x, y } = parentNode.position()
+                    previewNode = createPreviewNode(graph, previewNode, x + 10, y + 120)
+                  } else {
+                    // 有子节点，加最后面
+                    const lastChildId = childrenIds[childrenIds.length - 1]
+                    const lastChildNode = graph.getCellById(lastChildId) as Node
+                    const { x, y } = lastChildNode.position()
+                    previewNode = createPreviewNode(graph, previewNode, x + 100, y - 10)
+                  }
+                }
+                previewEdge = createPreviewEdge(graph, previewEdge, previewNode, parentNode)
+
                 // 暂存移动信息，在mouseup时执行
                 sourceNode.setData({ pendingMove: movePosition })
+              }
+            } else {
+              // 没有相交节点时，清除之前的movePosition和预览节点
+              const currentData = sourceNode.getData()
+              if (currentData?.pendingMove) {
+                delete currentData.pendingMove
+                sourceNode.setData(currentData)
+              }
+
+              // 清理预览节点
+              if (previewNode) {
+                previewNode.remove()
+                previewNode = null
+              }
+              if (previewEdge) {
+                previewEdge.remove()
+                previewEdge = null
               }
             }
           }
@@ -225,16 +360,6 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
       } else {
         // 如果不是拖拽（简单点击），手动触发点击事件
         // console.log('节点被点击:', sourceNode)
-        // 添加选中效果
-        // graph.batchUpdate(() => {
-        //   const nodes = graph.getNodes()
-        //   nodes.forEach((node) => {
-        //     if (node.shape === 'org-node') {
-        //       node.setAttrs({ '.card': { selected: false } })
-        //     }
-        //   })
-        // })
-        // sourceNode?.setAttrs({ '.card': { selected: true } })
 
         // 清理状态
         graph.enablePanning()
@@ -247,16 +372,6 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   // 添加全局mouseup事件，确保在画布空白处释放也能清理
   graph.on('blank:mouseup', () => {
     handleMouseUpCleanup(true)
-
-    // 清除选中效果
-    // graph.batchUpdate(() => {
-    //   const nodes = graph.getNodes()
-    //   nodes.forEach((node) => {
-    //     if (node.shape === 'org-node') {
-    //       node.setAttrs({ '.card': { selected: false } })
-    //     }
-    //   })
-    // })
   })
 
   // 监听节点添加事件
@@ -284,7 +399,7 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
 
     if (success) {
       console.log('✅ 新节点添加成功:', newNodeData)
-      console.log('📄 更新后的tree数据:', JSON.stringify(treeData.value, null, 2))
+      // console.log('📄 更新后的tree数据:', JSON.stringify(treeData.value, null, 2))
     } else {
       console.log('❌ 新节点添加失败')
     }
@@ -297,25 +412,12 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
     if (selectedCells.length > 0) {
       removeNode(selectedCells[0].id)
     }
-    // graphInstance.batchUpdate(() => {
-    //   const selectedCells = graphInstance.getSelectedCells()
-    //   if (selectedCells.length > 0) {
-    //     selectedCells.map((cell: Cell) => {
-    //       if (cell.isNode()) {
-    //         const successors = graphInstance.getSuccessors(cell)
-    //         successors.map((node) => graphInstance.removeNode(node as Node))
-    //         if (!graphInstance.isRootNode(cell)) {
-    //           graphInstance.removeNode(cell)
-    //         }
-    //       }
-    //     })
-    //   }
-    // })
     return false
   })
 
   // 返回响应式tree数据，供外部监听
   return {
     treeData,
+    updateTreeData,
   }
 }

@@ -1,11 +1,15 @@
 <template>
   <div>
-    <org-chart :data="data" :config="{ width: 1000, height: 800 }" />
+    <button @click="onExport">导出图片</button>
+    <button @click="onUndo">撤销undo</button>
+    <button @click="onRedo">重做redo</button>
+    <org-chart ref="orgChartRef" :data="data" :config="{ width: 1000, height: 800 }" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import OrgChart from '@/components/org-chart/OrgChart.vue'
+import { ref } from 'vue'
 
 const data = {
   id: '1',
@@ -42,5 +46,17 @@ const data = {
       ],
     },
   ],
+}
+
+const orgChartRef = ref()
+
+const onExport = () => {
+  orgChartRef.value.exportChart()
+}
+const onUndo = () => {
+  orgChartRef.value.onUndo()
+}
+const onRedo = () => {
+  orgChartRef.value.onRedo()
 }
 </script>
