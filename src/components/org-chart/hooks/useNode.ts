@@ -1,4 +1,4 @@
-import { Edge, Graph, Node } from '@antv/x6'
+import { Cell, Edge, Graph, Node } from '@antv/x6'
 import type { HierarchyResult } from '../types'
 import addIconSvg from '../assets/add.svg?raw'
 
@@ -64,8 +64,15 @@ export function useNode() {
                 fontSize: 16,
                 backgroundColor: '#fff',
               },
-              getText: '.name/text',
-              setText: '.name/text',
+              // history 生效
+              getText: ({ cell }: { cell: Cell }) => {
+                return cell.getAttrByPath('.name/text')
+              },
+              setText: ({ cell, value }: { cell: Cell; value: string }) => {
+                if (value) {
+                  cell.setAttrs({ '.name': { text: value } })
+                }
+              },
             },
           },
         ],

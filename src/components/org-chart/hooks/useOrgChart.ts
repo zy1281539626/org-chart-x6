@@ -174,42 +174,10 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
       }
     })
 
-    // 监听节点编辑器开始事件
-    graphInstance.on('node:editor:open', ({ cell }) => {
-      if (cell.isNode()) {
-        console.log('📝 Node-editor: 开始编辑节点', cell.id)
-      }
-    })
-
-    // 监听节点编辑器关闭事件
-    graphInstance.on('node:editor:close', ({ cell }) => {
-      if (cell.isNode()) {
-        console.log('📝 Node-editor: 编辑完成节点', cell.id)
-
-        // if (onTreeDataSync && !isProcessingHistory) {
-        //   const rebuiltData = rebuildTreeDataFromGraph(graphInstance)
-        //   if (rebuiltData) {
-        //     // 设置标志，避免 watch 触发渲染
-        //     isProcessingHistory = true
-        //     onTreeDataSync(rebuiltData)
-        //     setTimeout(() => {
-        //       isProcessingHistory = false
-        //     }, 50)
-        //   }
-        // }
-      }
-    })
-
-    // 备用方案：监听属性变化，但排除正在编辑的节点
-    graphInstance.on('node:change:attrs', ({ node, current, previous }) => {
-      // console.log('🔍 属性变化调试:', {
-      //   nodeId: node.id,
-      //   editingNodeId,
-      //   isEditing: editingNodeId === node.id,
-      //   currentText: current['.name']?.text,
-      //   previousText: previous?.['.name']?.text,
-      // })
-    })
+    // 调试
+    // graphInstance.on('node:change:attrs', ({ node, current, previous }) => {
+    //   console.log(current, previous)
+    // })
   }
 
   // 初始化
