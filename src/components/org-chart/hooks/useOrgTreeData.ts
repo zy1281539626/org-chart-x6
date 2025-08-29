@@ -124,6 +124,21 @@ export function useOrgTreeData(initialData?: OrgChartData) {
     return false
   }
 
+  // 更新边标签（根据边ID解析出目标节点ID）
+  const updateEdgeLabel = (edgeId: string, newLabel: string): boolean => {
+    // 边ID格式: edge-${source.id}#${target.id}
+    const match = edgeId.match(/^edge-(.+)#(.+)$/)
+    if (!match) return false
+    
+    const targetNodeId = match[2]
+    const node = findNodeById(targetNodeId)
+    if (node) {
+      node.edgeLabel = newLabel
+      return true
+    }
+    return false
+  }
+
   // 更新整个tree数据
   const updateTreeData = (newData: OrgChartData) => {
     treeData.value = JSON.parse(JSON.stringify(newData))
@@ -137,6 +152,7 @@ export function useOrgTreeData(initialData?: OrgChartData) {
     addNode,
     moveNode,
     updateNodeName,
+    updateEdgeLabel,
     updateTreeData,
   }
 }

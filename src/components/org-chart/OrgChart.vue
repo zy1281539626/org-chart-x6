@@ -62,7 +62,7 @@ const initChart = async () => {
       eventTreeData,
       (newData) => {
         if (newData && graphInstance) {
-          console.log(newData)
+          // console.log(newData)
           emits('update:data', newData)
           // 使用 batchUpdate 确保所有图形操作被合并为一个历史记录
           graphInstance.batchUpdate(() => {

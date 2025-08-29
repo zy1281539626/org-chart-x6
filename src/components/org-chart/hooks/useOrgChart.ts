@@ -110,16 +110,20 @@ function rebuildTreeDataFromGraph(graph: Graph): OrgChartData | null {
 
   // 递归构建有序的树形结构
   const buildOrderedTree = (nodeId: string): OrgChartData => {
-    const node = nodeMap.get(nodeId)
-    const nodeData = node?.getData() || {}
+    const node = nodeMap.get(nodeId) as Node
+    const nodeName = node?.getAttrByPath('.name/text') as string
+    // console.log('nodeName:', nodeName)
+    const edge = graph.getIncomingEdges(node)?.[0]
+    const labelText = edge?.getLabels()?.[0].attrs?.label.text as string
+    // console.log('=====labelText:', edge?.getLabels())
     const childrenIds = childrenMap.get(nodeId) || []
-
     // 对子节点按位置排序
     const sortedChildrenIds = sortChildrenByPosition(childrenIds)
 
     return {
       id: nodeId,
-      name: nodeData.name || '节点',
+      name: nodeName || '节点',
+      edgeLabel: labelText,
       children: sortedChildrenIds.map((childId) => buildOrderedTree(childId)),
     }
   }

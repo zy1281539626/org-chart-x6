@@ -145,8 +145,16 @@ function calculateMovePosition(
 
 export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   const { createGhostNode, createPreviewNode, createPreviewEdge } = useNode()
-  const { treeData, findNodeAndParent, moveNode, addNode, removeNode, updateTreeData, updateNodeName } =
-    useOrgTreeData(initialData)
+  const {
+    treeData,
+    findNodeAndParent,
+    moveNode,
+    addNode,
+    removeNode,
+    updateTreeData,
+    updateNodeName,
+    updateEdgeLabel,
+  } = useOrgTreeData(initialData)
   let ghostNode: Node | null = null
   let isDragging = false
   let sourceNode: Node | null = null
@@ -408,6 +416,20 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
     const newName = node.getAttrByPath('.name/text')
     if (newName && typeof newName === 'string') {
       updateNodeName(node.id, newName)
+    }
+  })
+
+  // 监听边标签变化，同步边标签到 treeData
+  graph.on('edge:change:labels', ({ edge }) => {
+    const labels = edge.getLabels()
+    // console.log(labels)
+    if (labels && labels.length > 0) {
+      // 获取标签文本
+      const labelText = labels[0].attrs?.label?.text || labels[0].attrs?.text?.text
+      // console.log('labelText:', labelText)
+      if (labelText && typeof labelText === 'string') {
+        updateEdgeLabel(edge.id, labelText)
+      }
     }
   })
 

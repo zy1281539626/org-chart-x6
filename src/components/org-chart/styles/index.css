@@ -1,8 +1,12 @@
 /* 双击编辑框样式 */
-.x6-cell-tool-editor {
+.x6-node-tool-editor {
   width: 120px;
   height: 40px;
   line-height: 40px;
+}
+.x6-edge-tool-editor {
+  width: auto;
+  height: auto;
 }
 
 .card {

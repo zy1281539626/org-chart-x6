@@ -18,6 +18,7 @@ export interface OrgEdgeData {
 export interface OrgChartData {
   id: string
   name?: string
+  edgeLabel?: string // 从父节点到此节点的边标签
   children?: OrgChartData[]
   // nodes: OrgNodeData[]
   // edges: OrgEdgeData[]
