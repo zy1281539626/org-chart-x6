@@ -383,6 +383,7 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
     const newNodeData: OrgChartData = {
       id: newNodeId,
       name: '新节点',
+      edgeLabel: '0%',
       children: [],
     }
 
