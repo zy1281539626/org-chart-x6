@@ -114,6 +114,16 @@ export function useOrgTreeData(initialData?: OrgChartData) {
     return success
   }
 
+  // 更新节点名称
+  const updateNodeName = (nodeId: string, newName: string): boolean => {
+    const node = findNodeById(nodeId)
+    if (node) {
+      node.name = newName
+      return true
+    }
+    return false
+  }
+
   // 更新整个tree数据
   const updateTreeData = (newData: OrgChartData) => {
     treeData.value = JSON.parse(JSON.stringify(newData))
@@ -126,6 +136,7 @@ export function useOrgTreeData(initialData?: OrgChartData) {
     removeNode,
     addNode,
     moveNode,
+    updateNodeName,
     updateTreeData,
   }
 }

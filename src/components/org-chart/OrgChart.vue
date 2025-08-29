@@ -16,6 +16,8 @@ import { useOrgChart } from './hooks/useOrgChart'
 import { setupEventHandlers } from './hooks/useEvents'
 import type { OrgChartData } from './types'
 
+const emits = defineEmits(['update:data'])
+
 const graphRef = ref<HTMLDivElement | null>(null)
 
 const props = withDefaults(defineProps<OrgChartProps>(), {
@@ -60,6 +62,8 @@ const initChart = async () => {
       eventTreeData,
       (newData) => {
         if (newData && graphInstance) {
+          console.log(newData)
+          emits('update:data', newData)
           // 使用 batchUpdate 确保所有图形操作被合并为一个历史记录
           graphInstance.batchUpdate(() => {
             renderData(newData, false) // 正常渲染，允许产生历史记录

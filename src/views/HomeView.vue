@@ -3,7 +3,8 @@
     <button @click="onExport">导出图片</button>
     <button @click="onUndo">撤销undo</button>
     <button @click="onRedo">重做redo</button>
-    <org-chart ref="orgChartRef" :data="data" :config="{ width: 1000, height: 800 }" />
+    <button @click="getData">获取data</button>
+    <org-chart ref="orgChartRef" v-model:data="data" :config="{ width: 1000, height: 800 }" />
   </div>
 </template>
 
@@ -59,5 +60,9 @@ const onUndo = () => {
 }
 const onRedo = () => {
   orgChartRef.value.onRedo()
+}
+
+const getData = () => {
+  console.log(data.value)
 }
 </script>

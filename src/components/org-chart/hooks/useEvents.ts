@@ -145,7 +145,7 @@ function calculateMovePosition(
 
 export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
   const { createGhostNode, createPreviewNode, createPreviewEdge } = useNode()
-  const { treeData, findNodeAndParent, moveNode, addNode, removeNode, updateTreeData } =
+  const { treeData, findNodeAndParent, moveNode, addNode, removeNode, updateTreeData, updateNodeName } =
     useOrgTreeData(initialData)
   let ghostNode: Node | null = null
   let isDragging = false
@@ -401,6 +401,14 @@ export function setupEventHandlers(graph: Graph, initialData: OrgChartData) {
       removeNode(selectedCells[0].id)
     }
     return false
+  })
+
+  // 监听节点属性变化，同步节点名称到 treeData
+  graph.on('node:change:attrs', ({ node }) => {
+    const newName = node.getAttrByPath('.name/text')
+    if (newName && typeof newName === 'string') {
+      updateNodeName(node.id, newName)
+    }
   })
 
   // 返回响应式tree数据，供外部监听
