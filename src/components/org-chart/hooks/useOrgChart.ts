@@ -220,7 +220,7 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
     graphInstance.use(
       new History({
         enabled: true,
-        stackSize: 10,
+        // stackSize: 10,
       }),
     )
 

@@ -37,13 +37,14 @@ const initChart = async () => {
   // 初始化图
   graphInstance = initialize(graphRef.value)
   // 导入初始数据
-  if (props.data) {
-    renderData(props.data, true)
+  const currentData = props.data || { id: '1', name: '母公司', children: [] }
+  if (currentData) {
+    renderData(currentData, true)
     graphInstance.centerContent()
   }
   // 设置事件处理
-  if (props.data) {
-    const eventHandler = setupEventHandlers(graphInstance, props.data)
+  if (currentData) {
+    const eventHandler = setupEventHandlers(graphInstance, currentData)
     eventTreeData = eventHandler.treeData
     updateEventTreeData = eventHandler.updateTreeData
 
