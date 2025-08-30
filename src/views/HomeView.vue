@@ -4,7 +4,12 @@
     <button @click="onUndo">撤销undo</button>
     <button @click="onRedo">重做redo</button>
     <button @click="getData">获取data</button>
-    <org-chart ref="orgChartRef" v-model:data="data" :config="{ width: 1000, height: 800 }" />
+    <org-chart
+      style="height: 900px"
+      ref="orgChartRef"
+      v-model:data="data"
+      :config="{ width: 1000, height: 800 }"
+    />
   </div>
 </template>
 

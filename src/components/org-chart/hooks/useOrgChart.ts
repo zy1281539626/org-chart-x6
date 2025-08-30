@@ -195,7 +195,7 @@ export function useOrgChart(config: Partial<OrgChartConfig> = {}) {
       autoResize: true,
       width: fullConfig.width,
       height: fullConfig.height,
-      grid: true,
+      grid: false,
       background: {
         color: fullConfig.background || '#F3F7FF',
       },

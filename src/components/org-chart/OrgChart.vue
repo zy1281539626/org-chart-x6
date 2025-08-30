@@ -42,7 +42,9 @@ const initChart = async () => {
   const currentData = props.data || { id: '1', name: '母公司', children: [] }
   if (currentData) {
     renderData(currentData, true)
-    graphInstance.centerContent()
+    setTimeout(() => {
+      graphInstance?.centerContent()
+    }, 100)
   }
   // 设置事件处理
   if (currentData) {
