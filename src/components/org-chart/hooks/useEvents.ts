@@ -102,7 +102,7 @@ function calculateMovePosition(
       }
 
       // 检查源节点是否已经在目标位置（目标节点左边）
-      if (sourceParent?.id === parentNode.id && sourceIndex === nodeIndex) {
+      if (sourceParent?.id === parentNode.id && sourceIndex + 1 === nodeIndex) {
         return null // 已经在目标位置，不需要移动
       }
 
